@@ -1,15 +1,15 @@
 import threading
 import time
 from gensound import *
-import math
+
 
 class SoundServer(threading.Thread):
-    def __init__(self, sound_duration = 0.1):
+    def __init__(self, sound_duration=0.1):
         threading.Thread.__init__(self)
         self.stop_sound_server_signal = threading.Event()
         self.sound_lock = threading.Lock()
         self.sound_to_play = []
-        self.sound_duration = sound_duration #seconds
+        self.sound_duration = sound_duration  # seconds
 
     def run(self):
         while not self.stop_sound_server_signal.is_set():
@@ -22,7 +22,8 @@ class SoundServer(threading.Thread):
                 self.sound_lock.release()
                 time.sleep(self.sound_duration / 100)
             else:
-                first_pending_sound = Sine(frequency = sum(self.sound_to_play) / len(self.sound_to_play), duration = self.sound_duration * 1000)
+                first_pending_sound = Sine(frequency=sum(self.sound_to_play) / len(self.sound_to_play),
+                                           duration=self.sound_duration * 1000)
                 # print("playin {}".format(first_pending_sound))
                 self.sound_to_play = []
                 self.sound_lock.release()
@@ -31,8 +32,6 @@ class SoundServer(threading.Thread):
     def stop_sound_server(self):
         self.stop_sound_server_signal.set()
 
-    
-        
     def add_sound_runable(self, freq):
         with self.sound_lock:
             if type(freq) is int:
@@ -41,33 +40,22 @@ class SoundServer(threading.Thread):
                 self.sound_to_play += freq
             else:
                 raise TypeError
-    
+
+
 class AAST(threading.Thread):
-    def __init__(self, server_obj : SoundServer, freq):
+    def __init__(self, server_obj: SoundServer, freq):
         threading.Thread.__init__(self)
         self.freq = freq
         self.server_obj = server_obj
-    
+
     def run(self):
         # print("aast run")
         self.server_obj.sound_lock.acquire(blocking=True)
         self.server_obj.sound_to_play.append(self.freq)
         self.server_obj.sound_lock.release()
-    
 
-def add_sound_async(server_obj : SoundServer, freq):
+
+def add_sound_async(server_obj: SoundServer, freq):
     # print("sdd_sound_async")
     obj = AAST(server_obj, freq)
     obj.start()
-
-# ss = SoundServer()
-# ss.start()
-# add_sound_async(ss, 200)
-# time.sleep(0.7)
-# add_sound_async(ss, 300)
-# add_sound_async(ss, 400)
-# time.sleep(2)
-# add_sound_async(ss, 500)
-# add_sound_async(ss, 300)
-# #ss.stop_sound_server()
-
